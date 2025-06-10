@@ -15,7 +15,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.json.*;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonValue;
 
 public class GetASResultsParallel {
 
@@ -75,32 +79,38 @@ public class GetASResultsParallel {
                 }
 
                 String content = new String(Files.readAllBytes(Paths.get(antismashDir + File.separator + "regions.js")));
+                content = content.replace("var recordData = ", "");
 
 //                System.out.println(content);
 
-                JSONArray records = new JSONArray(content.replace("var recordData = ", ""));
+                // Parse JSON using javax.json
+                JsonReader jsonReader = Json.createReader(new java.io.StringReader(content));
+                JsonArray records = jsonReader.readArray();
+                jsonReader.close();
 
-//                System.out.println(records.length());
+//                System.out.println(records.size());
 
-                for (int i = 0; i < records.length(); i++) {
-                    JSONObject record = records.getJSONObject(i);
-                    JSONArray regions = record.getJSONArray("regions");
-                    if(regions.length() == 0)
+                for (int i = 0; i < records.size(); i++) {
+                    JsonObject record = records.getJsonObject(i);
+                    JsonArray regions = record.getJsonArray("regions");
+                    if(regions.size() == 0)
                         continue;
                     String recordName = record.getString("seq_id");
                     int length = record.getInt("length");
-                    for (int j = 0; j < regions.length(); j++) {
-                        JSONObject region = regions.getJSONObject(j);
-//                        JSONArray orfs = region.getJSONArray("orfs"); //get orfs when needed
-                        JSONArray productCategories = region.getJSONArray("product_categories");
+                    for (int j = 0; j < regions.size(); j++) {
+                        JsonObject region = regions.getJsonObject(j);
+//                        JsonArray orfs = region.getJsonArray("orfs"); //get orfs when needed
+                        JsonArray productCategories = region.getJsonArray("product_categories");
                         String anchor = region.getString("anchor");
                         int start = region.getInt("start");
                         int end = region.getInt("end");
                         String type = region.getString("type");
-                        JSONArray clusters = region.getJSONArray("clusters");
-                        JSONArray products = region.getJSONArray("products");
+                        JsonArray clusters = region.getJsonArray("clusters");
+                        JsonArray products = region.getJsonArray("products");
                         ArrayList<String> productArr = new ArrayList<>();
-                        products.forEach(p -> productArr.add(p.toString()));
+                        for (JsonValue p : products) {
+                            productArr.add(p.toString());
+                        }
 
                         boolean isContigEdge = false;
                         if(start == 1 || end == length)
@@ -108,7 +118,14 @@ public class GetASResultsParallel {
 
 //                        database.insertRegion(run, recordName, length, productCategories.toString(), anchor, start, end, isContigEdge, type, productArr.toString(), (j+1));
 
-                        String productCategoriesString = "{" + productCategories.join(",") + "}";
+                        StringBuilder pcBuilder = new StringBuilder("{");
+                        for (int k = 0; k < productCategories.size(); k++) {
+                            if (k > 0) pcBuilder.append(",");
+                            pcBuilder.append(productCategories.get(k).toString());
+                        }
+                        pcBuilder.append("}");
+                        String productCategoriesString = pcBuilder.toString();
+
                         String productArrString = "{" + String.join(",", productArr) + "}";
 
                         bw.write(run + "\t" + recordName + "\t" + length + "\t" + productCategoriesString + "\t" +

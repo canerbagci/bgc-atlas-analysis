@@ -1,8 +1,5 @@
 package pipeline.mgnify.antismash.io;
 
-import org.biojava.nbio.core.sequence.io.GenbankReader;
-import org.biojava.nbio.core.sequence.template.Sequence;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
