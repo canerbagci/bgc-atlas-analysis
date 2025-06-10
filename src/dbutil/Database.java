@@ -259,28 +259,36 @@ public class Database {
     public void insertPC(String assembly, String contig, String region, int number, String category, String product,
                          String contigEdge, String gbkFile) {
         String sql = "INSERT INTO protoclusters (assembly, contig, region, protocluster_num, " +
-                "category, product, contig_edge, gbk_file) VALUES ('" + assembly + "', '" + contig + "', '" + region +
-                "', '"  + number + "', '"  + category + "', '" + product + "', '" + contigEdge + "', '" + gbkFile + "')";
-//        System.out.println(sql);
+                "category, product, contig_edge, gbk_file) VALUES (?,?,?,?,?,?,?,?)";
 
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, assembly);
+            statement.setString(2, contig);
+            statement.setString(3, region);
+            statement.setInt(4, number);
+            statement.setString(5, category);
+            statement.setString(6, product);
+            statement.setString(7, contigEdge);
+            statement.setString(8, gbkFile);
+            statement.executeUpdate();
         } catch (SQLException e) {
+            System.err.println("Failed to insert protocluster: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     public void insertClustering(String bgc, String bgcType, int familyNumber, double clusteringThreshold, String assembly) {
-        String sql = "INSERT INTO bigscape_clustering (bgc_name, bgc_type, family_number, clustering_threshold, assembly) VALUES ('" +
-                bgc + "', '" + bgcType + "', '" + familyNumber + "', '" + clusteringThreshold + "', '" + assembly + "')";
-        try{
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        String sql = "INSERT INTO bigscape_clustering (bgc_name, bgc_type, family_number, clustering_threshold, assembly) " +
+                "VALUES (?,?,?,?,?)";
+        try(PreparedStatement statement = connection.prepareStatement(sql)){
+            statement.setString(1, bgc);
+            statement.setString(2, bgcType);
+            statement.setInt(3, familyNumber);
+            statement.setDouble(4, clusteringThreshold);
+            statement.setString(5, assembly);
+            statement.executeUpdate();
         } catch (SQLException e) {
-            System.out.println(sql);
+            System.err.println("Failed to insert clustering: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -290,17 +298,26 @@ public class Database {
                                   String sharedGroup, String bgcType, double clusteringThreshold) {
         String sql = "INSERT INTO bigscape_networks (clustername1, clustername2, raw_distance, squared_similarity, jaccard_index, " +
                 "dss_index, adjacency_index, dss_non_anchor, raw_dss_anchor, non_anchor_domains, anchor_domains, " +
-                "combined_group, shared_group, bgc_type, clustering_threshold) VALUES ('" + clustername1 + "', '" +
-                clustername2 + "', '" + rawDistance + "', '" + squaredSimilarity + "', '" + jaccardIndex + "', '" +
-                dssIndex + "', '" + adjacencyIndex + "', '" + rawDSSnonAnchor + "', '" + rawDSSAnchor + "', '" +
-                nonAnchorDomains + "', '" + anchorDoamins + "', '" + combinedGroup + "', '" + sharedGroup + "', '" +
-                bgcType + "', '" + clusteringThreshold + "')";
-        try{
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+                "combined_group, shared_group, bgc_type, clustering_threshold) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        try(PreparedStatement statement = connection.prepareStatement(sql)){
+            statement.setString(1, clustername1);
+            statement.setString(2, clustername2);
+            statement.setDouble(3, rawDistance);
+            statement.setDouble(4, squaredSimilarity);
+            statement.setDouble(5, jaccardIndex);
+            statement.setDouble(6, dssIndex);
+            statement.setDouble(7, adjacencyIndex);
+            statement.setDouble(8, rawDSSnonAnchor);
+            statement.setDouble(9, rawDSSAnchor);
+            statement.setInt(10, nonAnchorDomains);
+            statement.setInt(11, anchorDoamins);
+            statement.setString(12, combinedGroup);
+            statement.setString(13, sharedGroup);
+            statement.setString(14, bgcType);
+            statement.setDouble(15, clusteringThreshold);
+            statement.executeUpdate();
         } catch (SQLException e) {
-            System.err.println(sql);
+            System.err.println("Failed to insert network edge: " + e.getMessage());
             e.printStackTrace();
         }
     }
