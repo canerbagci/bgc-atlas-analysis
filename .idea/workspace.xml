@@ -6,6 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="7eff8114-d8aa-4662-8955-edc231a85e91" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/bgcatlas/analysis/api/ApiClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/bgcatlas/analysis/api/ApiClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/bgcatlas/analysis/api/MgnifyApiClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/bgcatlas/analysis/api/MgnifyApiClient.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,6 +32,9 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Application.BgcAtlasAnalysisApp.executor&quot;: &quot;Run&quot;,
+    &quot;Application.MgnifyCrawlerRunner.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.MgnifyApiClientTest.executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
@@ -39,13 +46,63 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Libraries&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
     &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RunManager" selected="Application.MgnifyCrawlerRunner">
+    <configuration name="BgcAtlasAnalysisApp" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="org.bgcatlas.analysis.BgcAtlasAnalysisApp" />
+      <module name="bgc-atlas-analysis" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.bgcatlas.analysis.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="MgnifyCrawlerRunner" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="org.bgcatlas.analysis.runner.MgnifyCrawlerRunner" />
+      <module name="bgc-atlas-analysis" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.bgcatlas.analysis.runner.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="MgnifyApiClientTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="bgc-atlas-analysis" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.bgcatlas.analysis.api.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.bgcatlas.analysis.api" />
+      <option name="MAIN_CLASS_NAME" value="org.bgcatlas.analysis.api.MgnifyApiClientTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.MgnifyCrawlerRunner" />
+        <item itemvalue="JUnit.MgnifyApiClientTest" />
+        <item itemvalue="Application.BgcAtlasAnalysisApp" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -61,7 +118,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1749571148628</updated>
-      <workItem from="1749571149765" duration="2153000" />
+      <workItem from="1749571149765" duration="3564000" />
     </task>
     <servers />
   </component>
