@@ -5,6 +5,8 @@ import data.mgnify.Sample;
 import pipeline.mgnify.GetBiomeTypes;
 
 import java.sql.*;
+import javax.sql.rowset.CachedRowSet;
+import javax.sql.rowset.RowSetProvider;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -122,14 +124,13 @@ public class Database {
         String sql = "SELECT * FROM mgnify_asms WHERE assembly IN (SELECT assembly FROM antismash_runs WHERE status IS NULL) ORDER BY random()LIMIT 1";
 //        String sql = "SELECT * FROM mgnify_asms WHERE assembly NOT IN (SELECT assembly FROM antismash_runs WHERE status != 'success') ORDER BY random()LIMIT 1";
 
-        try {
-            Statement statement = this.connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(sql);
-            boolean next = resultSet.next();
-            String assemblyId = resultSet.getString(1);
-            String link = resultSet.getString(14);
-            statement.close();
-            return new String[] {assemblyId, link};
+        try (Statement statement = this.connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)) {
+            if (resultSet.next()) {
+                String assemblyId = resultSet.getString(1);
+                String link = resultSet.getString(14);
+                return new String[]{assemblyId, link};
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -138,13 +139,11 @@ public class Database {
 
     public String getRunStatus(String assemblyId) {
         String sql = "SELECT status FROM antismash_runs WHERE assembly = '" + assemblyId + "'";
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery();
-            boolean next = resultSet.next();
-            String status = resultSet.getString(1);
-            statement.close();
-            return status;
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            if (resultSet.next()) {
+                return resultSet.getString(1);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -156,10 +155,8 @@ public class Database {
                 "' WHERE assembly = '" + assemblyId + "'";
         System.out.println(sql);
 
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -169,10 +166,8 @@ public class Database {
         String sql = "UPDATE antismash_runs SET antismash_version = '" + asVer + "', pipeline_version = '" + pipeVer + "', run_server = '"
                 + server + "', res_path = '" +  resPath + "', status = '" + status + "', run_timestamp = CURRENT_TIMESTAMP WHERE assembly = '"
                 + assemblyId + "'";
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -185,10 +180,8 @@ public class Database {
                 "ON CONFLICT(assembly) DO NOTHING";
 //        System.out.println(sql);
 
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -197,11 +190,10 @@ public class Database {
     public List<String> getAllAssemblyAccessions() {
         String sql = "SELECT assembly FROM mgnify_asms";
 
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            ResultSet resultSet = preparedStatement.executeQuery();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
             List<String> assemblyAccessions = new ArrayList<>();
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 assemblyAccessions.add(resultSet.getString(1));
             }
             return assemblyAccessions;
@@ -218,11 +210,10 @@ public class Database {
                 "         LEFT JOIN protoclusters AS pc ON ar.assembly = pc.assembly\n" +
                 "WHERE ar.status = 'success' AND pc.assembly IS NULL AND ar.res_path NOT LIKE '/vol/%';";
 
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            ResultSet resultSet = preparedStatement.executeQuery();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
             List<String> assemblyAccessions = new ArrayList<>();
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 assemblyAccessions.add(resultSet.getString(1));
             }
             return assemblyAccessions;
@@ -234,11 +225,10 @@ public class Database {
 
     public List<String> getAllFinishedRuns() {
                 String sql = "SELECT assembly FROM antismash_runs WHERE status = 'success'";
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            ResultSet resultSet = preparedStatement.executeQuery();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
             List<String> assemblyAccessions = new ArrayList<>();
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 assemblyAccessions.add(resultSet.getString(1));
             }
             return assemblyAccessions;
@@ -263,10 +253,8 @@ public class Database {
                 "', '"  + number + "', '"  + category + "', '" + product + "', '" + contigEdge + "', '" + gbkFile + "')";
 //        System.out.println(sql);
 
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -275,10 +263,8 @@ public class Database {
     public void insertClustering(String bgc, String bgcType, int familyNumber, double clusteringThreshold, String assembly) {
         String sql = "INSERT INTO bigscape_clustering (bgc_name, bgc_type, family_number, clustering_threshold, assembly) VALUES ('" +
                 bgc + "', '" + bgcType + "', '" + familyNumber + "', '" + clusteringThreshold + "', '" + assembly + "')";
-        try{
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         } catch (SQLException e) {
             System.out.println(sql);
             e.printStackTrace();
@@ -295,10 +281,8 @@ public class Database {
                 dssIndex + "', '" + adjacencyIndex + "', '" + rawDSSnonAnchor + "', '" + rawDSSAnchor + "', '" +
                 nonAnchorDomains + "', '" + anchorDoamins + "', '" + combinedGroup + "', '" + sharedGroup + "', '" +
                 bgcType + "', '" + clusteringThreshold + "')";
-        try{
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         } catch (SQLException e) {
             System.err.println(sql);
             e.printStackTrace();
@@ -317,14 +301,13 @@ public class Database {
                 "      AND clustering_threshold = 0.3\n" +
                 "    LIMIT 1\n" +
                 ");";
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery();
-            while(resultSet.next()) {
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
                 String bgcNameFam = resultSet.getString(1);
                 bgcs.add(bgcNameFam);
             }
-        }catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return bgcs;
@@ -334,14 +317,12 @@ public class Database {
         String sql = "SELECT family_number FROM bigscape_clustering " +
                 "WHERE bgc_name = '" + bgcName + "' " +
                 "AND clustering_threshold = 0.3;";
-        try{
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery();
-            while(resultSet.next()) {
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
                 return resultSet.getString(1);
             }
-            statement.close();
-        }catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return "";
@@ -353,31 +334,38 @@ public class Database {
                 + "', '" + biome.getSamplesRelated()+ "', '" + biome.getGenomesRelated() + "', '" + biome.getChildrenRelated()
                 + "', '" + biome.getStudiesRelated()  + "')" + "ON CONFLICT(id) DO NOTHING";
         System.out.println(sql);
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public ResultSet executeQuery(String sql) {
-        try{
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet;
-        } catch (SQLException e){
+    public CachedRowSet executeQuery(String sql) {
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            CachedRowSet rowSet = RowSetProvider.newFactory().createCachedRowSet();
+            rowSet.populate(resultSet);
+            return rowSet;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public <T> T executeQuery(String sql, ResultSetHandler<T> handler) {
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            return handler.handle(resultSet);
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
     }
 
     public void executeUpdate(String sql) {
-        try{
-            PreparedStatement statement = connection.prepareStatement(sql);
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.executeUpdate();
-            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -386,10 +374,8 @@ public class Database {
     public void insertGCFMembership(String gcfId, String bgcId, String membershipValue, int threshold) {
         String sql = "INSERT INTO bigslice_gcf_membership (gcf_id, bgc_id, membership_value, threshold) VALUES (" + gcfId + ", " +
                 bgcId + ", " + membershipValue + ", " + threshold + ")" + " ON CONFLICT DO NOTHING";
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            int i = statement.executeUpdate();
-            statement.close();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -412,8 +398,7 @@ public class Database {
 
     public void insertRegion(String run, String contigName, int recordId, String products, String contigEdge, String regionNumber, String location) {
         String sql = "INSERT INTO regions (assembly, contig_name, products, contig_edge, contig_number, region_number, location) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING";
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, run);
             statement.setString(2, contigName);
             String[] productArray = products
@@ -425,8 +410,7 @@ public class Database {
             statement.setInt(6, Integer.parseInt(regionNumber)); // Assuming regionNumber is an integer
             statement.setString(7, location);
 
-            int i = statement.executeUpdate();
-            statement.close();
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -434,8 +418,7 @@ public class Database {
 
     public void insertRegion(String run, String recordName, int length, String productCategories, String anchor, int start, int end, boolean isContigEdge, String type, String products, int regionNum) {
         String sql = "INSERT INTO regions (assembly, contig_name, contig_len, product_categories, anchor, start, \"end\", contig_edge, type, products, region_num) VALUES (?, ?, ?, ARRAY[?], ?, ?, ?, ?, ?, ARRAY[?], ?) ON CONFLICT DO NOTHING";
-        try {
-            PreparedStatement statement = connection.prepareStatement(sql);
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, run);
             statement.setString(2, recordName);
             statement.setInt(3, length);
@@ -459,8 +442,7 @@ public class Database {
             statement.setInt(11, regionNum);
 
 
-            int i = statement.executeUpdate();
-            statement.close();
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }

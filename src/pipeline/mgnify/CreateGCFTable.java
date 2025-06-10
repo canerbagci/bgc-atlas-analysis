@@ -27,9 +27,16 @@ public class CreateGCFTable {
 
             BufferedWriter bw = new BufferedWriter(new FileWriter(new File(gcfTable)));
 
-            ResultSet gcfIDs = database.executeQuery("SELECT DISTINCT(gcf_id) FROM bigslice_gcf_membership");
-            while(gcfIDs.next()) {
-                int gcfId = gcfIDs.getInt(1);
+            List<Integer> gcfIDs = database.executeQuery(
+                    "SELECT DISTINCT(gcf_id) FROM bigslice_gcf_membership",
+                    rs -> {
+                        List<Integer> ids = new ArrayList<>();
+                        while (rs.next()) {
+                            ids.add(rs.getInt(1));
+                        }
+                        return ids;
+                    });
+            for (int gcfId : gcfIDs) {
 
                 int regCount = 0;
                 Map<String, Integer> productCount = new HashMap<>();
@@ -50,12 +57,16 @@ public class CreateGCFTable {
                         }
                     }
 
-                    ResultSet longestBiome = database.executeQuery("SELECT longest_biome FROM assembly2longestbiome WHERE assembly = '" + assembly + "'");
-                    if(longestBiome.next()) {
-                        String longestBiomeString = longestBiome.getString(1);
-                        biomeCount.putIfAbsent(longestBiomeString, 0);
-                        biomeCount.put(longestBiomeString, biomeCount.get(longestBiomeString) + 1);
-                    }
+                    database.executeQuery(
+                            "SELECT longest_biome FROM assembly2longestbiome WHERE assembly = '" + assembly + "'",
+                            rs -> {
+                                if (rs.next()) {
+                                    String longestBiomeString = rs.getString(1);
+                                    biomeCount.putIfAbsent(longestBiomeString, 0);
+                                    biomeCount.put(longestBiomeString, biomeCount.get(longestBiomeString) + 1);
+                                }
+                                return null;
+                            });
                 }
 
                 Map<String, Integer> pcSorted = sortMap(productCount);
