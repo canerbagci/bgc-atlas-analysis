@@ -362,6 +362,49 @@ public class MgnifyApiClient implements ApiClient {
                         Path runFilePath = runsDir.resolve(runId + ".json");
                         Files.writeString(runFilePath, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(run));
                         logger.info("Saved run {} to {}", runId, runFilePath);
+
+                        // Check if the run has assemblies relationship and fetch them
+                        if (run.has("relationships") && 
+                            run.get("relationships").has("assemblies") && 
+                            run.get("relationships").get("assemblies").has("links") && 
+                            run.get("relationships").get("assemblies").get("links").has("related")) {
+
+                            String assembliesUrl = run.get("relationships").get("assemblies").get("links").get("related").asText();
+                            logger.info("Found assemblies link for run {}: {}", runId, assembliesUrl);
+
+                            // Create a directory for this run if it doesn't exist
+                            Path runDir = runsDir.resolve(runId);
+                            if (!Files.exists(runDir)) {
+                                Files.createDirectories(runDir);
+                                logger.info("Created run directory: {}", runDir);
+                            }
+
+                            // Fetch and save the assemblies data
+                            try {
+                                HttpGet assemblyRequest = new HttpGet(assembliesUrl);
+                                ApiResponse assemblyResponse = executeRequest(assemblyRequest);
+
+                                if (!assemblyResponse.isSuccessful()) {
+                                    logger.warn("Failed to fetch assemblies for run {}. Status code: {}", runId, assemblyResponse.getStatusCode());
+                                } else {
+                                    // Save the assemblies data
+                                    Path assembliesFilePath = runDir.resolve("assemblies.json");
+                                    Files.writeString(assembliesFilePath, assemblyResponse.getBody());
+                                    logger.info("Saved assemblies for run {} to {}", runId, assembliesFilePath);
+
+                                    // Add a small delay to avoid overwhelming the API
+                                    try {
+                                        Thread.sleep(500);
+                                    } catch (InterruptedException e) {
+                                        Thread.currentThread().interrupt();
+                                        logger.warn("Thread interrupted while fetching assemblies", e);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                logger.error("Error fetching assemblies for run {}", runId, e);
+                                // Don't throw the exception, just log it and continue with other runs
+                            }
+                        }
                     }
 
                     logger.info("Finished saving {} individual runs", runCount);
