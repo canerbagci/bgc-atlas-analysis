@@ -82,17 +82,12 @@ public class GetBiomeTypes {
             for(JsonValue datum : data) {
                 JsonObject analysisObj = datum.asJsonObject();
                 String analysisID = analysisObj.getString("id");
-                ResultSet resultSet = database.executeQuery("SELECT * FROM mgnify_asms WHERE assembly = '" + analysisID + "'");
-                String assemblyDB = "";
-                try {
-                    while (resultSet.next()) {
-                        assemblyDB = resultSet.getString(1);
-                    }
-                }catch (SQLException e) {
-                    e.printStackTrace();
-                }
-                if(analysisID.equals(assemblyDB)) {
-                    database.executeUpdate("INSERT INTO assembly2biome (assembly, biome) VALUES ('" + assemblyDB + "', '" +
+                boolean exists = Boolean.TRUE.equals(
+                        database.executeQuery(
+                                "SELECT 1 FROM mgnify_asms WHERE assembly = '" + analysisID + "'",
+                                rs -> rs.next()));
+                if (exists) {
+                    database.executeUpdate("INSERT INTO assembly2biome (assembly, biome) VALUES ('" + analysisID + "', '" +
                             biome.getId() + "')");
                 }
             }
