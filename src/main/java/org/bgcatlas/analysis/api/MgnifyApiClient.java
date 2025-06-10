@@ -213,6 +213,11 @@ public class MgnifyApiClient implements ApiClient {
             Files.writeString(relPath, response.getBody());
             logger.info("Saved {} relationship to {}", relationType, relPath);
 
+            // If this is a samples relationship, also save each sample to its own file
+            if ("samples".equals(relationType)) {
+                saveSamplesToIndividualFiles(response.getBody(), studyDir);
+            }
+
             // Add a small delay to avoid overwhelming the API
             try {
                 Thread.sleep(500);
@@ -223,6 +228,55 @@ public class MgnifyApiClient implements ApiClient {
         } catch (Exception e) {
             logger.error("Error fetching relationship: " + relationType, e);
             // Don't throw the exception, just log it and continue with other relationships
+        }
+    }
+
+    /**
+     * Parses the samples JSON and saves each sample to its own file.
+     *
+     * @param samplesJson The JSON string containing the samples data
+     * @param studyDir The directory of the study
+     * @throws IOException if an error occurs while saving the files
+     */
+    private void saveSamplesToIndividualFiles(String samplesJson, Path studyDir) throws IOException {
+        logger.info("Parsing samples and saving each to its own file");
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode json = mapper.readTree(samplesJson);
+
+            // Create samples directory if it doesn't exist
+            Path samplesDir = studyDir.resolve("samples");
+            if (!Files.exists(samplesDir)) {
+                Files.createDirectories(samplesDir);
+                logger.info("Created samples directory: {}", samplesDir);
+            }
+
+            // Check if the JSON has a data array
+            if (json.has("data") && json.get("data").isArray()) {
+                int sampleCount = 0;
+
+                // Process each sample in the data array
+                for (JsonNode sample : json.get("data")) {
+                    sampleCount++;
+
+                    // Extract sample ID
+                    String sampleId = sample.has("id") ? sample.get("id").asText() : "unknown-" + sampleCount;
+                    logger.info("Processing sample: {}", sampleId);
+
+                    // Save the sample as its own JSON file
+                    Path sampleFilePath = samplesDir.resolve(sampleId + ".json");
+                    Files.writeString(sampleFilePath, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(sample));
+                    logger.info("Saved sample {} to {}", sampleId, sampleFilePath);
+                }
+
+                logger.info("Finished saving {} individual samples", sampleCount);
+            } else {
+                logger.warn("Samples JSON does not have a data array or is not in the expected format");
+            }
+        } catch (Exception e) {
+            logger.error("Error parsing samples JSON and saving individual files", e);
+            // Don't throw the exception, just log it
         }
     }
 
