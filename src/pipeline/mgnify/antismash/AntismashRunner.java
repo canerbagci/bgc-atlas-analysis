@@ -72,7 +72,7 @@ public class AntismashRunner implements Runnable {
                     condaEnv = "antismash7";
                 }
 
-                List commandList = new ArrayList<>();
+                List<String> commandList = new ArrayList<>();
                 commandList.add("bash");
                 commandList.add("-c");
                 commandList.add("source " + condaPath + " && conda activate " + condaEnv + " && " +
