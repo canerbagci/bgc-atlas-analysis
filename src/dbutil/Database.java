@@ -10,26 +10,44 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class Database {
 
-    private final String url = "jdbc:postgresql://localhost:5432/atlas";
-    private final String user = "user";
-    private final String password = "password";
+    private String url;
+    private String user;
+    private String password;
 
     private final Connection connection;
 
     public Database() {
+        loadConfiguration();
         this.connection = this.connect();
     }
 
     public Database(boolean connect) {
+        loadConfiguration();
         if(!connect) {
             this.connection = null;
             return;
         } else {
             this.connection = this.connect();
         }
+    }
+
+    private void loadConfiguration() {
+        Properties props = new Properties();
+        try(InputStream in = new FileInputStream("db.properties")) {
+            props.load(in);
+        } catch (IOException ignored) {}
+
+        Map<String, String> env = System.getenv();
+        this.url = env.getOrDefault("DB_URL", props.getProperty("db.url", "jdbc:postgresql://localhost:5432/atlas"));
+        this.user = env.getOrDefault("DB_USER", props.getProperty("db.user", "user"));
+        this.password = env.getOrDefault("DB_PASSWORD", props.getProperty("db.password", "password"));
     }
 
     private Connection connect() {
