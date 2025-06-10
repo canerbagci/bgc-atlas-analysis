@@ -264,10 +264,27 @@ public class MgnifyApiClient implements ApiClient {
                     String sampleId = sample.has("id") ? sample.get("id").asText() : "unknown-" + sampleCount;
                     logger.info("Processing sample: {}", sampleId);
 
+                    // Create directory for this sample
+                    Path sampleDir = samplesDir.resolve(sampleId);
+                    if (!Files.exists(sampleDir)) {
+                        Files.createDirectories(sampleDir);
+                        logger.info("Created sample directory: {}", sampleDir);
+                    }
+
                     // Save the sample as its own JSON file
-                    Path sampleFilePath = samplesDir.resolve(sampleId + ".json");
+                    Path sampleFilePath = sampleDir.resolve("sample.json");
                     Files.writeString(sampleFilePath, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(sample));
                     logger.info("Saved sample {} to {}", sampleId, sampleFilePath);
+
+                    // Check if the sample has runs relationship and fetch them
+                    if (sample.has("relationships") && 
+                        sample.get("relationships").has("runs") && 
+                        sample.get("relationships").get("runs").has("links") && 
+                        sample.get("relationships").get("runs").get("links").has("related")) {
+
+                        String runsUrl = sample.get("relationships").get("runs").get("links").get("related").asText();
+                        fetchAndSaveRuns(runsUrl, sampleDir);
+                    }
                 }
 
                 logger.info("Finished saving {} individual samples", sampleCount);
@@ -289,6 +306,83 @@ public class MgnifyApiClient implements ApiClient {
         } catch (Exception e) {
             logger.error("Error fetching dataset details for ID: " + datasetId, e);
             throw new ApiException("Failed to fetch dataset details for ID: " + datasetId, e);
+        }
+    }
+
+    /**
+     * Fetches and saves runs for a sample.
+     *
+     * @param url The URL of the runs resource
+     * @param sampleDir The directory of the sample
+     * @throws ApiException if an error occurs during the API call
+     * @throws IOException if an error occurs while saving the files
+     */
+    private void fetchAndSaveRuns(String url, Path sampleDir) throws ApiException, IOException {
+        logger.info("Fetching runs from {}", url);
+
+        try {
+            HttpGet request = new HttpGet(url);
+            ApiResponse response = executeRequest(request);
+
+            if (!response.isSuccessful()) {
+                logger.warn("Failed to fetch runs. Status code: {}", response.getStatusCode());
+                return;
+            }
+
+            // Create runs directory if it doesn't exist
+            Path runsDir = sampleDir.resolve("runs");
+            if (!Files.exists(runsDir)) {
+                Files.createDirectories(runsDir);
+                logger.info("Created runs directory: {}", runsDir);
+            }
+
+            // Save the runs data
+            Path runsFilePath = runsDir.resolve("runs.json");
+            Files.writeString(runsFilePath, response.getBody());
+            logger.info("Saved runs to {}", runsFilePath);
+
+            // Parse the runs JSON and save each run to its own file
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode json = mapper.readTree(response.getBody());
+
+                // Check if the JSON has a data array
+                if (json.has("data") && json.get("data").isArray()) {
+                    int runCount = 0;
+
+                    // Process each run in the data array
+                    for (JsonNode run : json.get("data")) {
+                        runCount++;
+
+                        // Extract run ID
+                        String runId = run.has("id") ? run.get("id").asText() : "unknown-" + runCount;
+                        logger.info("Processing run: {}", runId);
+
+                        // Save the run as its own JSON file
+                        Path runFilePath = runsDir.resolve(runId + ".json");
+                        Files.writeString(runFilePath, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(run));
+                        logger.info("Saved run {} to {}", runId, runFilePath);
+                    }
+
+                    logger.info("Finished saving {} individual runs", runCount);
+                } else {
+                    logger.warn("Runs JSON does not have a data array or is not in the expected format");
+                }
+            } catch (Exception e) {
+                logger.error("Error parsing runs JSON and saving individual files", e);
+                // Don't throw the exception, just log it
+            }
+
+            // Add a small delay to avoid overwhelming the API
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warn("Thread interrupted while fetching runs", e);
+            }
+        } catch (Exception e) {
+            logger.error("Error fetching runs", e);
+            // Don't throw the exception, just log it and continue with other samples
         }
     }
 
